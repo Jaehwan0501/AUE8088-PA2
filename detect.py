@@ -26,6 +26,10 @@ Usage - formats:
                                  yolov5s.tflite             # TensorFlow Lite
                                  yolov5s_edgetpu.tflite     # TensorFlow Edge TPU
                                  yolov5s_paddle_model       # PaddlePaddle
+
+
+My example
+ python detect.py --weights /home/ailab/git/AUE8088-PA2/runs/train/yolov5n3/weights/best.pt --source /home/ailab/git/AUE8088-PA2/datasets/nuscenes/test/images --project runs/detect_test_1 --name test_results_1 --save-txt --save-csv --view-img
 """
 
 import argparse
@@ -76,11 +80,11 @@ def run(
     iou_thres=0.45,  # NMS IOU threshold
     max_det=1000,  # maximum detections per image
     device="",  # cuda device, i.e. 0 or 0,1,2,3 or cpu
-    view_img=False,  # show results
-    save_txt=False,  # save results to *.txt
-    save_csv=False,  # save results in CSV format
+    view_img=True,  # show results
+    save_txt=True,  # save results to *.txt
+    save_csv=True,  # save results in CSV format
     save_conf=False,  # save confidences in --save-txt labels
-    save_crop=False,  # save cropped prediction boxes
+    save_crop=True,  # save cropped prediction boxes
     nosave=False,  # do not save images/videos
     classes=None,  # filter by class: --class 0, or --class 0 2 3
     agnostic_nms=False,  # class-agnostic NMS
