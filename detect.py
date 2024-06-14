@@ -30,6 +30,7 @@ Usage - formats:
 
 My example
  python detect.py --weights /home/ailab/git/AUE8088-PA2/runs/train/yolov5n3/weights/best.pt --source /home/ailab/git/AUE8088-PA2/datasets/nuscenes/test/images --project runs/detect_test_1 --name test_results_1 --save-txt --save-csv --view-img
+ python detect.py --weights /home/ailab/git/AUE8088_PA2/jaehwan/AUE8088-PA2/runs/train/yolov5n/weights/best.pt --source /home/ailab/git/AUE8088_PA2/jaehwan/AUE8088-PA2/datasets/nuscenes/test/images --project runs/detect_test_1 --name test_results_240614 --save-txt --save-csv
 """
 
 import argparse
@@ -80,7 +81,7 @@ def run(
     iou_thres=0.45,  # NMS IOU threshold
     max_det=1000,  # maximum detections per image
     device="",  # cuda device, i.e. 0 or 0,1,2,3 or cpu
-    view_img=True,  # show results
+    view_img=False,  # show results
     save_txt=True,  # save results to *.txt
     save_csv=True,  # save results in CSV format
     save_conf=False,  # save confidences in --save-txt labels
@@ -94,7 +95,7 @@ def run(
     project=ROOT / "runs/detect",  # save results to project/name
     name="exp",  # save results to project/name
     exist_ok=False,  # existing project/name ok, do not increment
-    line_thickness=3,  # bounding box thickness (pixels)
+    line_thickness=1,  # bounding box thickness (pixels)
     hide_labels=False,  # hide labels
     hide_conf=False,  # hide confidences
     half=False,  # use FP16 half-precision inference
@@ -193,7 +194,7 @@ def run(
             s += "%gx%g " % im.shape[2:]  # print string
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if save_crop else im0  # for save_crop
-            annotator = Annotator(im0, line_width=line_thickness, example=str(names))
+            annotator = Annotator(im0, line_width=1, example=str(names))
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
