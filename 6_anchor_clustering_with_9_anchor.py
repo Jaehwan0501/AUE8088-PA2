@@ -106,7 +106,7 @@ def extract_bounding_boxes_from_labels(labels_path):
                     all_boxes.append([width, height])
     return np.array(all_boxes)
 
-def calculate_anchors(boxes, n_clusters=3):
+def calculate_anchors(boxes, n_clusters=9):
     kmeans = KMeans(n_clusters=n_clusters, random_state=0).fit(boxes)
     return kmeans.cluster_centers_, kmeans.labels_
 
@@ -116,7 +116,7 @@ bounding_boxes = extract_bounding_boxes_from_labels(labels_path)
 print(f'Extracted {len(bounding_boxes)} bounding boxes')
 
 # K-means 클러스터링을 사용하여 앵커 계산
-anchors, labels = calculate_anchors(bounding_boxes, n_clusters=3)
+anchors, labels = calculate_anchors(bounding_boxes, n_clusters=9)
 print(f'Calculated anchors: {anchors}')
 
 # 이미지 사이즈에 맞는 앵커 계산
@@ -141,9 +141,9 @@ sorted_indices = np.argsort(anchor_areas)
 sorted_anchors = anchors_scaled[sorted_indices]
 
 # 세 그룹으로 나누기
-anchors_P3 = sorted_anchors[:1]  # 가장 작은 anchor
-anchors_P4 = sorted_anchors[1:2] # 중간 anchor
-anchors_P5 = sorted_anchors[2:]  # 가장 큰 anchor
+anchors_P3 = sorted_anchors[:3]  # 가장 작은 anchor
+anchors_P4 = sorted_anchors[3:6] # 중간 anchor
+anchors_P5 = sorted_anchors[6:]  # 가장 큰 anchor
 
 # 결과 출력
 print(f'Anchors for P3/8: {anchors_P3}')
@@ -155,20 +155,20 @@ fig, ax = plt.subplots(figsize=(10, 10))
 for anchor in anchors_scaled_2:
     rect = plt.Rectangle((0, 0), anchor[0], anchor[1], fill=False, edgecolor='r', linewidth=2)
     ax.add_patch(rect)
-ax.set_xlim(0, 640)
-ax.set_ylim(0, 640)
+ax.set_xlim(0, 416)
+ax.set_ylim(0, 416)
 ax.set_title('Calculated Anchors')
 ax.set_aspect('equal')
 plt.show()
 
 # 클러스터링 결과 시각화
 fig, ax = plt.subplots(figsize=(10, 10))
-scatter = ax.scatter(bounding_boxes[:, 0] * 640, bounding_boxes[:, 1] * 640, c=labels, cmap='viridis')
+scatter = ax.scatter(bounding_boxes[:, 0] * 416, bounding_boxes[:, 1] * 416, c=labels, cmap='viridis')
 for anchor in anchors_scaled_2:
     rect = plt.Rectangle((0, 0), anchor[0], anchor[1], fill=False, edgecolor='r', linewidth=2)
     ax.add_patch(rect)
-ax.set_xlim(0, 640)
-ax.set_ylim(0, 640)
+ax.set_xlim(0, 416)
+ax.set_ylim(0, 416)
 ax.set_title('Clustering of Bounding Boxes')
 ax.set_aspect('equal')
 plt.colorbar(scatter)

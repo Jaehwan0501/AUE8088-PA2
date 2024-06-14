@@ -82,9 +82,9 @@
   $ python train_simple.py \
     --img 416 \
     --batch-size 64 \
-    --epochs 40 \
+    --epochs 30 \
     --data data/nuscenes.yaml \
-    --cfg models/yolov5n_nuscenes.yaml \
+    --cfg models/yolov5s_nuscenes_jh.yaml \
     --weights yolov5n.pt \
     --workers 16 \
     --name yolov5n
