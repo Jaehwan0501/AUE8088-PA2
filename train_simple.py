@@ -26,6 +26,8 @@ from pathlib import Path
 from torch.optim import lr_scheduler
 from tqdm import tqdm
 
+import wandb
+
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
 if str(ROOT) not in sys.path:
@@ -487,5 +489,7 @@ def main(opt, callbacks=Callbacks()):
 
 
 if __name__ == "__main__":
+    wandb.login(key='61103c383e2466af37dce7fb530359a81de3f2b4', relogin=True)
+    
     opt = parse_opt()
     main(opt)
