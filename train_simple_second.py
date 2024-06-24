@@ -26,12 +26,6 @@ from pathlib import Path
 from torch.optim import lr_scheduler
 from tqdm import tqdm
 
-import wandb
-import json
-
-from PIL import Image
-import torchvision.transforms as transforms
-
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
 if str(ROOT) not in sys.path:
@@ -89,6 +83,7 @@ def train(hyp, opt, device, callbacks):
 
     `hyp` argument is path/to/hyp.yaml or hyp dictionary.
     """
+
     save_dir, epochs, batch_size, weights, single_cls, data, cfg, noval, nosave, workers = (
         Path(opt.save_dir),
         opt.epochs,
@@ -101,6 +96,9 @@ def train(hyp, opt, device, callbacks):
         opt.nosave,
         opt.workers,
     )
+    print(type(save_dir))
+    print("***************************",str(save_dir)+"/epoch_test")
+
     callbacks.run("on_pretrain_routine_start")
 
     # Directories
@@ -140,6 +138,14 @@ def train(hyp, opt, device, callbacks):
     init_seeds(opt.seed, deterministic=True)
     data_dict = data_dict or check_dataset(data)  # check if None
     train_path, val_path = data_dict["train"], data_dict["val"]
+    test_path = data_dict["test"]
+    print("**************************** test path: " , test_path)
+    
+    print("**************************** val path: " , val_path)
+    # mine
+    val_path2 = data_dict["val"]
+
+
     nc = 1 if single_cls else int(data_dict["nc"])  # number of classes
     names = {0: data_dict["names"][0]} if single_cls and len(data_dict["names"]) != 1 else data_dict["names"]  # class names
 
@@ -224,6 +230,31 @@ def train(hyp, opt, device, callbacks):
         prefix=colorstr("val: "),
         rgbt_input=opt.rgbt,
     )[0]
+    print("*****************************val_loader done")
+
+    # test loader
+    
+
+    print("*****************************test_loader done")
+    #del val_loader
+    #torch.cuda.empty_cache()
+
+    #mine
+    # val_loader2 = create_dataloader(
+    #     val_path2,
+    #     imgsz,
+    #     batch_size * 2,
+    #     gs,
+    #     single_cls,
+    #     hyp=hyp,
+    #     cache=None,
+    #     rect=False,     # Should be set to False for validation, otherwise it will break evaluation pipeline
+    #     rank=-1,
+    #     workers=workers,
+    #     pad=0.5,
+    #     prefix=colorstr("val2: "),
+    #     rgbt_input=opt.rgbt,
+    # )[0]
 
     # pre-reduce anchor precision
     model.half().float()
@@ -264,8 +295,10 @@ def train(hyp, opt, device, callbacks):
     for epoch in range(start_epoch, epochs):  # epoch ------------------------------------------------------------------
         callbacks.run("on_train_epoch_start")
         model.train()
-
+        #### modify
         mloss = torch.zeros(3, device=device)  # mean losses
+        #mloss = torch.zeros(3, device=device)  # mean losses
+        ####
         pbar = enumerate(train_loader)
         LOGGER.info(("\n" + "%11s" * 7) % ("Epoch", "GPU_mem", "box_loss", "obj_loss", "cls_loss", "Instances", "Size"))
 
@@ -315,9 +348,10 @@ def train(hyp, opt, device, callbacks):
             # Log
             mloss = (mloss * i + loss_items) / (i + 1)  # update mean losses
             mem = f"{torch.cuda.memory_reserved() / 1E9 if torch.cuda.is_available() else 0:.3g}G"  # (GB)
+            #### delete description
             pbar.set_description(
-                ("%11s" * 2 + "%11.4g" * 5)
-                % (f"{epoch}/{epochs - 1}", mem, *mloss, targets.shape[0], (imgs[0] if isinstance(imgs, list) else imgs).shape[-1])
+               ("%11s" * 2 + "%11.4g" * 5)
+               % (f"{epoch}/{epochs - 1}", mem, *mloss, targets.shape[0], (imgs[0] if isinstance(imgs, list) else imgs).shape[-1])
             )
             callbacks.run("on_train_batch_end", model, ni, imgs, targets, paths, list(mloss))
             if callbacks.stop_training:
@@ -393,12 +427,31 @@ def train(hyp, opt, device, callbacks):
             strip_optimizer(f)  # strip optimizers
             if f is best:
                 LOGGER.info(f"\nValidating {f}...")
+                #mine
+                val_loader = create_dataloader(
+                    val_path2,
+                    imgsz,
+                    batch_size * 2,
+                    gs,
+                    single_cls,
+                    hyp=hyp,
+                    cache=None,
+                    rect=False,     # Should be set to False for validation, otherwise it will break evaluation pipeline
+                    rank=-1,
+                    workers=workers,
+                    pad=0.5,
+                    prefix=colorstr("val2: "),
+                    rgbt_input=opt.rgbt,
+                )[0]
+                #mine
                 results, _, _ = validate.run(
                     data_dict,
                     batch_size=batch_size * 2,
                     imgsz=imgsz,
                     model=attempt_load(f, device).half(),
+                    #model=attempt_load(f, device),
                     iou_thres=0.65 if is_coco else 0.60,  # best pycocotools at iou 0.65
+                    #iou_thres=0.65,
                     single_cls=single_cls,
                     dataloader=val_loader,
                     save_dir=save_dir,
@@ -406,15 +459,45 @@ def train(hyp, opt, device, callbacks):
                     verbose=True,
                     plots=False,
                     callbacks=callbacks,
-                    compute_loss=compute_loss,
+                    compute_loss=compute_loss, 
                 )  # val best model with plots
+                # mine3
+                # test_loader = create_dataloader(
+                #     test_path,
+                #     imgsz,
+                #     batch_size * 2,
+                #     gs,
+                #     single_cls,
+                #     hyp=hyp,
+                #     cache=None if opt.cache == "test" else opt.cache,# if noval else opt.cache,
+                #     rect=False,     # Should be set to False for validation, otherwise it will break evaluation pipeline
+                #     rank=-1,
+                #     workers=workers,
+                #     pad=0.5,
+                #     prefix=colorstr("val: "),
+                #     rgbt_input=opt.rgbt,
+                # )[0]
+                # results, _, _ = validate.run(
+                #     data_dict,
+                #     batch_size=batch_size * 2,
+                #     imgsz=imgsz,
+                #     model=attempt_load(f, device).half(),
+                #     #model=attempt_load(f, device),
+                #     iou_thres=0.65, #if is_coco else 0.60,  # best pycocotools at iou 0.65
+                #     single_cls=single_cls,
+                #     dataloader=test_loader,
+                #     save_dir=save_dir,
+                #     save_json=True,
+                #     verbose=True,
+                #     verbose=False,
+                #     plots=False,
+                #     callbacks=callbacks,
+                #     compute_loss=compute_loss, 
+                # )  # val best model with plots
                 if is_coco:
                     callbacks.run("on_fit_epoch_end", list(mloss) + list(results) + lr, epoch, best_fitness, fi)
 
     callbacks.run("on_train_end", last, best, epoch, results)
-    
-    # 학습 완료 후 generate_test_predictions 호출
-    generate_test_predictions(model, device, save_dir)
 
     torch.cuda.empty_cache()
     return results
@@ -468,79 +551,8 @@ def parse_opt(known=False):
     parser.add_argument("--upload_dataset", nargs="?", const=True, default=False, help='Upload data, "val" option')
     parser.add_argument("--bbox_interval", type=int, default=-1, help="Set bounding-box image logging interval")
     parser.add_argument("--artifact_alias", type=str, default="latest", help="Version of dataset artifact to use")
-    
-    parser.add_argument('--final-eval', action='store_true', help='Run final evaluation and generate predictions')
 
     return parser.parse_known_args()[0] if known else parser.parse_args()
-
-def generate_test_predictions(model, device, save_dir):
-    test_file_path = 'datasets/kaist-rgbt/test-all-20.txt'
-    images_root_path = '/home/ailab/git/AUE8088_MPD/jaehwan/AUE8088-PA2/datasets/kaist-rgbt/test/images'
-    output_json_path = os.path.join(save_dir, 'test_predictions.json')
-
-    with open(test_file_path, 'r') as file:
-        test_lines = file.readlines()
-
-    predictions = []
-
-    transform = transforms.Compose([
-        transforms.Resize((512, 640)),
-        transforms.ToTensor()
-    ])
-
-    for idx, line in enumerate(test_lines):
-        image_path = line.strip()
-        lwir_image_path = image_path.replace("{}", "lwir")
-        visible_image_path = image_path.replace("{}", "visible")
-
-        lwir_img = Image.open(lwir_image_path).convert('L')
-        lwir_img = transform(lwir_img)
-
-        visible_img = Image.open(visible_image_path).convert('RGB')
-        visible_img = transform(visible_img)
-
-        # Ensure lwir_img has the same number of channels as visible_img
-        lwir_img = lwir_img.repeat(3, 1, 1)
-
-        # Update to send both lwir_img and visible_img separately
-        img = [visible_img.unsqueeze(0).to(device), lwir_img.unsqueeze(0).to(device)]
-
-        with torch.no_grad():
-            results = model(img)
-
-        # Print results for debugging
-        print(f"Results for image {idx}: {results}")
-
-        # Assuming results is a list of tensors with bounding box coordinates
-        for result in results:
-            for det in result:
-                print(f"Detection: {det}")  # Debugging line
-                if len(det) >= 6:
-                    predictions.append({
-                        "image_id": idx,
-                        "category_id": int(det[5].item()),
-                        "bbox": [float(det[0]), float(det[1]), float(det[2]), float(det[3])],
-                        "score": float(det[4].item())
-                    })
-                else:
-                    print(f"Unexpected detection format for image {idx}: {det}")
-
-    test_results = {
-        "info": {
-            "dataset": "KAIST Multispectral Pedestrian Benchmark",
-            "url": "https://soonminhwang.github.io/rgbt-ped-detection/",
-            "related_project_url": "http://multispectral.kaist.ac.kr",
-            "publish": "CVPR 2015"
-        },
-        "predictions": predictions
-    }
-
-    os.makedirs(os.path.dirname(output_json_path), exist_ok=True)
-    with open(output_json_path, 'w') as json_file:
-        json.dump(test_results, json_file, indent=4)
-
-    print(f"Test predictions file created successfully at {output_json_path}")
-
 
 
 def main(opt, callbacks=Callbacks()):
@@ -567,7 +579,5 @@ def main(opt, callbacks=Callbacks()):
 
 
 if __name__ == "__main__":
-    wandb.login(key='61103c383e2466af37dce7fb530359a81de3f2b4', relogin=True)
-    
     opt = parse_opt()
     main(opt)
