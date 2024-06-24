@@ -27,6 +27,10 @@ from torch.optim import lr_scheduler
 from tqdm import tqdm
 
 import wandb
+import json
+
+from PIL import Image
+import torchvision.transforms as transforms
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -408,6 +412,9 @@ def train(hyp, opt, device, callbacks):
                     callbacks.run("on_fit_epoch_end", list(mloss) + list(results) + lr, epoch, best_fitness, fi)
 
     callbacks.run("on_train_end", last, best, epoch, results)
+    
+    # 학습 완료 후 generate_test_predictions 호출
+    generate_test_predictions(model, device, save_dir)
 
     torch.cuda.empty_cache()
     return results
@@ -461,8 +468,78 @@ def parse_opt(known=False):
     parser.add_argument("--upload_dataset", nargs="?", const=True, default=False, help='Upload data, "val" option')
     parser.add_argument("--bbox_interval", type=int, default=-1, help="Set bounding-box image logging interval")
     parser.add_argument("--artifact_alias", type=str, default="latest", help="Version of dataset artifact to use")
+    
+    parser.add_argument('--final-eval', action='store_true', help='Run final evaluation and generate predictions')
 
     return parser.parse_known_args()[0] if known else parser.parse_args()
+
+def generate_test_predictions(model, device, save_dir):
+    test_file_path = 'datasets/kaist-rgbt/test-all-20.txt'
+    images_root_path = '/home/ailab/git/AUE8088_MPD/jaehwan/AUE8088-PA2/datasets/kaist-rgbt/test/images'
+    output_json_path = os.path.join(save_dir, 'test_predictions.json')
+
+    with open(test_file_path, 'r') as file:
+        test_lines = file.readlines()
+
+    predictions = []
+
+    transform = transforms.Compose([
+        transforms.Resize((512, 640)),
+        transforms.ToTensor()
+    ])
+
+    for idx, line in enumerate(test_lines):
+        image_path = line.strip()
+        lwir_image_path = image_path.replace("{}", "lwir")
+        visible_image_path = image_path.replace("{}", "visible")
+
+        lwir_img = Image.open(lwir_image_path).convert('L')
+        lwir_img = transform(lwir_img)
+
+        visible_img = Image.open(visible_image_path).convert('RGB')
+        visible_img = transform(visible_img)
+
+        # Ensure lwir_img has the same number of channels as visible_img
+        lwir_img = lwir_img.repeat(3, 1, 1)
+
+        # Update to send both lwir_img and visible_img separately
+        img = [visible_img.unsqueeze(0).to(device), lwir_img.unsqueeze(0).to(device)]
+
+        with torch.no_grad():
+            results = model(img)
+
+        # Print results for debugging
+        print(f"Results for image {idx}: {results}")
+
+        # Assuming results is a list of tensors with bounding box coordinates
+        for result in results:
+            for det in result:
+                if len(det) >= 6:
+                    predictions.append({
+                        "image_id": idx,
+                        "category_id": int(det[5].item()),
+                        "bbox": [float(det[0]), float(det[1]), float(det[2]), float(det[3])],
+                        "score": float(det[4].item())
+                    })
+                else:
+                    print(f"Unexpected detection format for image {idx}: {det}")
+
+    test_results = {
+        "info": {
+            "dataset": "KAIST Multispectral Pedestrian Benchmark",
+            "url": "https://soonminhwang.github.io/rgbt-ped-detection/",
+            "related_project_url": "http://multispectral.kaist.ac.kr",
+            "publish": "CVPR 2015"
+        },
+        "predictions": predictions
+    }
+
+    os.makedirs(os.path.dirname(output_json_path), exist_ok=True)
+    with open(output_json_path, 'w') as json_file:
+        json.dump(test_results, json_file, indent=4)
+
+    print(f"Test predictions file created successfully at {output_json_path}")
+
 
 
 def main(opt, callbacks=Callbacks()):

@@ -103,6 +103,8 @@
     --name yolov5n-rgbt \
     --rgbt \
     --single-cls
+
+  python train_simple.py   --img 640   --batch-size 16   --epochs 20   --data data/kaist-rgbt.yaml   --cfg models/yolov5n_kaist-rgbt.yaml   --weights yolov5n.pt   --workers 16   --name yolov5n-rgbt   --rgbt   --single-cls  --final-eval
   ```
 
 ### Evaluation (eval.ai server)
