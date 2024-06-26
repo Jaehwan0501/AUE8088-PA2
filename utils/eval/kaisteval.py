@@ -18,8 +18,18 @@ import sys
 import tempfile
 import traceback
 
-# matplotlib.use('Agg')
-# from matplotlib.patches import Polygon
+import sys
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 경로 설정
+kaisteval_path = '/home/ailab/git/AUE8088_MPD/jaehwan/AUE8088-PA2/utils/eval'
+if kaisteval_path not in sys.path:
+    sys.path.append(kaisteval_path)
+
+matplotlib.use('Agg')
+from matplotlib.patches import Polygon
 import matplotlib.pyplot as plt
 
 from coco import COCO
@@ -383,7 +393,7 @@ class KAISTPedEval(COCOeval):
 
         # create dictionary for future indexing
         _pe = self._paramsEval
-        # catIds = [1]                    # _pe.catIds if _pe.useCats else [-1]
+        catIds = [1]                    # _pe.catIds if _pe.useCats else [-1]
         catIds = [0]                    # _pe.catIds if _pe.useCats else [-1]
         setK = set(catIds)
         setM = set(_pe.maxDets)
@@ -419,8 +429,8 @@ class KAISTPedEval(COCOeval):
                 tps = np.logical_and(dtm, np.logical_not(dtIg))
                 fps = np.logical_and(np.logical_not(dtm), np.logical_not(dtIg))
                 # inds = np.where(dtIg == 0)[1]
-                # tps = tps[:, inds]
-                # fps = fps[:, inds]
+                tps = tps[:, inds]
+                fps = fps[:, inds]
 
                 tp_sum = np.cumsum(tps, axis=1).astype(dtype=np.float64)
                 fp_sum = np.cumsum(fps, axis=1).astype(dtype=np.float64)
@@ -590,14 +600,14 @@ def evaluate(test_annotation_file: str, user_submission_file: str, phase_codenam
         'AP_iou75': None,
         'AP_iou50:95': None,
         'MR_-2_iou50_all': None,
-        # 'MR_-2_iou60_all': None,
-        # 'MR_-2_iou75_all': None,
+        'MR_-2_iou60_all': None,
+        'MR_-2_iou75_all': None,
         'MR_-2_iou50_day': None,
-        # 'MR_-2_iou60_day': None,
-        # 'MR_-2_iou75_day': None,
+        'MR_-2_iou60_day': None,
+        'MR_-2_iou75_day': None,
         'MR_-2_iou50_night': None,
-        # 'MR_-2_iou60_night': None,
-        # 'MR_-2_iou75_night': None,
+        'MR_-2_iou60_night': None,
+        'MR_-2_iou75_night': None,
     }
 
     eval_result['all'].params.imgIds = imgIds
@@ -612,8 +622,8 @@ def evaluate(test_annotation_file: str, user_submission_file: str, phase_codenam
     eval_result['all'].accumulate()
     MR_all = eval_result['all'].summarize(0, subsetStr='All')
     metrics['MR_-2_iou50_all'] = MR_all[0]
-    # metrics['MR_-2_iou60_all'] = MR_all[1]
-    # metrics['MR_-2_iou75_all'] = MR_all[2]
+    metrics['MR_-2_iou60_all'] = MR_all[1]
+    metrics['MR_-2_iou75_all'] = MR_all[2]
 
     print('')
     eval_result['day'].params.imgIds = imgIds[:1455]
@@ -621,8 +631,8 @@ def evaluate(test_annotation_file: str, user_submission_file: str, phase_codenam
     eval_result['day'].accumulate()
     MR_day = eval_result['day'].summarize(0, subsetStr='Day')
     metrics['MR_-2_iou50_day'] = MR_day[0]
-    # metrics['MR_-2_iou60_day'] = MR_day[1]
-    # metrics['MR_-2_iou75_day'] = MR_day[2]
+    metrics['MR_-2_iou60_day'] = MR_day[1]
+    metrics['MR_-2_iou75_day'] = MR_day[2]
 
     print('')
     eval_result['night'].params.imgIds = imgIds[1455:]
@@ -630,20 +640,20 @@ def evaluate(test_annotation_file: str, user_submission_file: str, phase_codenam
     eval_result['night'].accumulate()
     MR_night = eval_result['night'].summarize(0, subsetStr='Night')
     metrics['MR_-2_iou50_night'] = MR_night[0]
-    # metrics['MR_-2_iou60_night'] = MR_night[1]
-    # metrics['MR_-2_iou75_night'] = MR_night[2]
+    metrics['MR_-2_iou60_night'] = MR_night[1]
+    metrics['MR_-2_iou75_night'] = MR_night[2]
 
-    # # recall_all = 1 - eval_result['all'].eval['yy'][0][-1]
-    # msg = f'\n########## Method: {method} ##########\n' \
-    #     + f'MR_all: {metrics["MR_-2_iou50_all"] * 100:.2f}\n' \
-    #     + f'MR_day: {metrics["MR_-2_iou50_day"] * 100:.2f}\n' \
-    #     + f'MR_night: {metrics["MR_-2_iou50_night"] * 100:.2f}\n' \
-    #     + '######################################\n\n'
-    #     # + f'recall_all: {recall_all * 100:.2f}\n' \
-    # print(msg)
+    # recall_all = 1 - eval_result['all'].eval['yy'][0][-1]
+    msg = f'\n########## Method: {method} ##########\n' \
+        + f'MR_all: {metrics["MR_-2_iou50_all"] * 100:.2f}\n' \
+        + f'MR_day: {metrics["MR_-2_iou50_day"] * 100:.2f}\n' \
+        + f'MR_night: {metrics["MR_-2_iou50_night"] * 100:.2f}\n' \
+        + '######################################\n\n'
+        # + f'recall_all: {recall_all * 100:.2f}\n' \
+    print(msg)
 
-    return metrics
-    # return eval_result
+    # return metrics
+    return eval_result
 
 
 def draw_all(eval_results, filename='figure.jpg'):
@@ -680,9 +690,9 @@ def draw_all(eval_results, filename='figure.jpg'):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='eval models')
-    parser.add_argument('--annFile', type=str, default='evaluation_script/KAIST_annotation.json',
+    parser.add_argument('--annFile', type=str, default='/home/ailab/git/AUE8088_MPD/jaehwan/AUE8088-PA2/utils/eval/KAIST_annotation.json',
                         help='Please put the path of the annotation file. Only support json format.')
-    parser.add_argument('--rstFiles', type=str, nargs='+', default=['evaluation_script/MLPD_result.json'],
+    parser.add_argument('--rstFiles', type=str, nargs='+', default=['/home/ailab/git/AUE8088_MPD/jaehwan/AUE8088-PA2/runs/train/yolov5s-rgbt3/epochNone_predictions.json'],
                         help='Please put the path of the result file. Only support json, txt format.')
     parser.add_argument('--evalFig', type=str, default='KASIT_BENCHMARK.jpg',
                         help='Please put the output path of the Miss rate versus false positive per-image (FPPI) curve')
@@ -692,5 +702,5 @@ if __name__ == "__main__":
     results = [evaluate(args.annFile, rstFile, phase) for rstFile in args.rstFiles]
 
     # Sort results by MR_all
-    # results = sorted(results, key=lambda x: x['all'].summarize(0), reverse=True)
-    # draw_all(results, filename=args.evalFig)
+    results = sorted(results, key=lambda x: x['all'].summarize(0), reverse=True)
+    draw_all(results, filename=args.evalFig)
