@@ -3,8 +3,8 @@ import os
 
 # 파일 경로 설정
 input_path = 'datasets/kaist-rgbt/train-all-04.txt'
-output_train_path = 'datasets/kaist-rgbt/train-all-04_train_80.txt'
-output_val_path = 'datasets/kaist-rgbt/train-all-04_val_20.txt'
+output_train_path = 'datasets/kaist-rgbt/train-all-04_train_0.8.txt'
+output_val_path = 'datasets/kaist-rgbt/train-all-04_val_0.2.txt'
 
 # 파일이 존재하는지 확인
 if not os.path.exists(input_path):
