@@ -3,12 +3,12 @@ import os
 import json
 
 # 경로 설정
-test_file_path = '/home/ailab/git/AUE8088_MPD/jaehwan/AUE8088-PA2/datasets/kaist-rgbt/test-all-20.txt'
+test_file_path = '/home/ailab/git/AUE8088_MPD/jaehwan/AUE8088-PA2/datasets/kaist-rgbt/train-all-04_val_0.2.txt'
 images_root_path = '/home/ailab/git/AUE8088_MPD/jaehwan/AUE8088-PA2/datasets/kaist-rgbt/train/images'
 output_json_path = '/home/ailab/git/AUE8088_MPD/jaehwan/AUE8088-PA2/runs/test/yolov5n-rgbt2/test_predictions.json'
 
 # YOLOv5 모델 로드 (미리 학습된 모델 사용)
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='/home/ailab/git/AUE8088_MPD/jaehwan/AUE8088-PA2/runs/train/yolov5n-rgbt2/weights/best.pt', force_reload=True)
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='/home/ailab/git/AUE8088_MPD/jaehwan/AUE8088-PA2/runs/train/yolov5s-rgbt7/weights/best.pt', force_reload=True)
 
 # test-all-20.txt 파일 읽기
 with open(test_file_path, 'r') as file:

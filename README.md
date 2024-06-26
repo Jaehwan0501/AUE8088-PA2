@@ -92,7 +92,7 @@
 ### Train
 - Command
   ```bash
-  $ python train_simple.py \
+  $ python train_simple_sub.py \
     --img 640 \
     --batch-size 16 \
     --epochs 20 \
@@ -105,6 +105,7 @@
     --single-cls
 
   python train_simple.py   --img 640   --batch-size 16   --epochs 20   --data data/kaist-rgbt.yaml   --cfg models/yolov5n_kaist-rgbt.yaml   --weights yolov5n.pt   --workers 16   --name yolov5n-rgbt   --rgbt   --single-cls  --final-eval
+  python train_simple_second.py   --img 640   --batch-size 16   --epochs 20   --data data/kaist-rgbt.yaml   --cfg models/yolov5s_kaist-rgbt.yaml   --weights yolov5s.pt   --workers 16   --name yolov5s-rgbt   --rgbt   --single-cls
   ```
 
 ### Evaluation (eval.ai server)
